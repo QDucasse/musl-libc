@@ -91,6 +91,14 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	char **envp = argv+argc+1;
 	__libc_start_init();
 
+	/* ──────── HBNG - SP INSTRUMENTATION HOOK ──────── */
+	{
+		/* Capture the stack pointer */
+		__asm__ __volatile__("mov x27, sp");
+		__asm__ __volatile__("str x27, [x28]");
+	}
+	/* ────────────────------───────────────────────── */
+
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
 	return 0;
