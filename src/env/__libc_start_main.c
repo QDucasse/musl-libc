@@ -100,8 +100,8 @@ void preload_stm_region(void)
   /* Store the virtual address in the TLS */
   stm_region_ptr = mapped_region;
 
-  /* Load the TLS pointer into x28 */
-  __asm__ __volatile__("mov x28, %0" ::"r"(stm_region_ptr));
+  /* Load the TLS pointer into x26 */
+  __asm__ __volatile__("mov x26, %0" ::"r"(stm_region_ptr));
 }
 
 /**
@@ -149,8 +149,8 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	/* ──────── HBNG - SP INSTRUMENTATION HOOK ──────── */
 	{
 		/* Capture the stack pointer */
-		__asm__ __volatile__("mov x27, sp");
-		__asm__ __volatile__("str x27, [x28]");
+		__asm__ __volatile__("mov x25, sp");
+		__asm__ __volatile__("str x25, [x26]");
 	}
 	/* ────────────────------───────────────────────── */
 

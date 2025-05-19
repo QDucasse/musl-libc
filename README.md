@@ -1,4 +1,6 @@
-### STMusl
+## STMusl: custom libc for CoreSight STM setup
+
+### Description
 
 This customized version of the `musl-libc` adds a routine to map the CoreSight STM module in user memory and writes the value of the stack pointer before launching the user program.
 
@@ -40,8 +42,8 @@ void preload_stm_region(void)
   /* Store the virtual address in the TLS */
   stm_region_ptr = mapped_region;
 
-  /* Load the TLS pointer into x28 */
-  __asm__ __volatile__("mov x28, %0" ::"r"(stm_region_ptr));
+  /* Load the TLS pointer into x26 */
+  __asm__ __volatile__("mov x26, %0" ::"r"(stm_region_ptr));
 }
 
 /**
@@ -87,8 +89,8 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 +	/* ──────── HBNG - SP INSTRUMENTATION HOOK ──────── */
 +	{
 +		/* Capture the stack pointer */
-+		__asm__ __volatile__("mov x27, sp");
-+		__asm__ __volatile__("str x27, [x28]");
++		__asm__ __volatile__("mov x25, sp");
++		__asm__ __volatile__("str x25, [x26]");
 +	}
 +	/* ────────────────------───────────────────────── */
 
@@ -101,6 +103,37 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	return 0;
 }
 
+```
+
+### Build
+
+The configure installs a directory that looks like:
+
+```bash
+<clone>
+cd musl-libc
+export CC=path/to/compiler  # If a custom compiler is used
+export MUSL_ROOT=/opt/musl
+./configure --prefix=$MUSL_ROOT/sysroot \
+              --exec-prefix=$MUSL_ROOT/bin \
+              --syslibdir=$MUSL_ROOT/sysroot/lib
+make -j$(nproc)
+make install
+```
+
+Compiling against the custom libc with llvm boils down to:
+
+```bash
+$BUILD_DIR/bin/clang \
+  -static \
+  -nostdlib \
+  -fuse-ld=$BUILD_DIR/bin/ld.lld \
+  -isystem $MUSL_ROOT$/musl/sysroot/include \
+  $MUSL_ROOT/sysroot/lib/crt1.o \
+  $MUSL_ROOT/sysroot/lib/crti.o \
+  -o fib fib.c \
+  -L$MUSL_ROOT/sysroot/lib -lc -lm \
+  $MUSL_ROOT/sysroot/lib/crtn.o
 ```
 
 ---
