@@ -11,9 +11,14 @@ weak void _fini();
 int __libc_start_main(int (*)(), int, char **,
 	void (*)(), void(*)(), void(*)());
 
+__attribute__((hbng_no_instr, used))
+void preload_stm_region(void);
+
+__attribute__((hbng_no_instr))
 hidden void _start_c(long *p)
 {
 	int argc = p[0];
 	char **argv = (void *)(p+1);
+	preload_stm_region();
 	__libc_start_main(main, argc, argv, _init, _fini, 0);
 }
