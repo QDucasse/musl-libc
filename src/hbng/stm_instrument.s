@@ -9,6 +9,8 @@ stm_region_ptr:
     .type preload_stm_region, %function
 
 preload_stm_region:
+    // Save x19/x20
+    stp x19, x20, [sp, #-16]!
     // openat syscall
     mov x0, -100         // AT_FDCWD
     ldr x1, =path_str    // pointer to "/dev/mem"
@@ -47,6 +49,8 @@ preload_stm_region:
     str x25, [x26]
 
 done:
+    // Restore x19/x20
+    ldp x19, x20, [sp], #16
     ret
 
 mmap_fail:
